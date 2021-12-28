@@ -1,6 +1,13 @@
 <template>
 <div>
-  Attr
+  <el-card class="box-card">
+    <CategoryList></CategoryList>
+  </el-card>
+
+  <el-card class="box-card">
+
+  </el-card>
+
 </div>
 </template>
 

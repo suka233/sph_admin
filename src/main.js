@@ -39,6 +39,10 @@ Vue.config.productionTip = false
 import * as API from '@/api'
 Vue.prototype.$API = API
 
+//注册联动列表为全局组件
+import CategoryList from '@/components/CategoryList'
+Vue.component("CategoryList",CategoryList)
+
 new Vue({
   el: '#app',
   router,

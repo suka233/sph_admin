@@ -47,7 +47,7 @@
 
     <!--    以下是dialog-->
     <el-dialog :title="tmForm.id?'编辑品牌':'添加品牌'" :visible.sync="dialogFormVisible">
-      <el-form :model="tmForm" :rules="rules" ref="tmForm">
+      <el-form :model="tmForm" :rules="rules" ref="tmForm" style="width: 80%">
         <el-form-item label="品牌名称" label-width="100px" prop="tmName">
           <el-input autocomplete="off" v-model="tmForm.tmName" label-width="80%"></el-input>
         </el-form-item>
@@ -87,7 +87,10 @@ export default {
       total: 0, //远程拿回来的数据,总共多少条
       pages: 0, //远程拿回来的数据,总共多少页
       dialogFormVisible: false, //控制dialog的显示隐藏
-      tmForm: {},
+      tmForm: {
+        tmName:'',
+        logoUrl:''
+      },
       rules: {
         tmName: [
           {required: true, message: '请输入品牌名称!', trigger: 'blur'},
@@ -123,8 +126,12 @@ export default {
     },
     //显示dialog
     showDialog(row) {
-      if (row) {
-        //如果传入了row,说明是修改数据,将row的数据转存到tmForm里面,避免直接修改row
+      if (row.tmName) {
+        // 如果传入了row,说明是修改数据,将row的数据转存到tmForm里面,避免直接修改row
+        // bug警示!不能直接if(row),而必须if(row.tmName) 因为如果click自定义函数未显式传递参数的话
+        // vue会默认传递$event进来,此时row就是$event,if(row)始终为true
+
+        // console.log(row)
         this.tmForm = {
           ...row
         }
@@ -135,12 +142,25 @@ export default {
     },
     //上传图片成功后的回调
     handleAvatarSuccess(res, file) {
-      //TODO 这里发现上传图片后要重新刷新一下tmForm,图片才显示,不知道为啥
-      this.tmForm.logoUrl = res.data;
+      // 这里发现上传图片后要重新刷新一下tmForm,图片才显示,不知道为啥
+      // this.tmForm.logoUrl = res.data;
+
 
       //使用vue的全局方法强制刷新数据,能一定程度的解决以上bug
-      this.$forceUpdate()
-      console.log(this.tmForm.logoUrl);
+      // this.$forceUpdate()
+
+      // 已经完美解决:如果要让对象新增的属性具有响应式,那么要使用this.$set来设置属性,而非仅仅是直接设置属性值!!
+      // this.$set(this.tmForm,"logoUrl",res.data)
+      // 不过以上的做法我还是有疑惑:tmForm.logoUrl在data里面已经定义为空了,按理来说已经具备响应式的能力了,为啥这里还要再次使用$set才有效呢?
+      // 以上问题已经完美解决:因为在showDialog中,点击添加按钮触发showDialog,虽然没有显式传递参数
+      // 但是,vue会给第一个参数默认传递为$event,也就是说,如果未显式传递参数,那么这个row就是$event
+      // 那么,其实this.tmForm={...row}是无论如何都会执行的,也就是在这里,this.tmForm失去了响应式能力
+      // 所以,解决办法很简单,一是重新在这里赋予tmForm响应式能力,但是这样会让showDialog的if(row)失去意义
+      // 所以,还是直接更改showDialog的判断即可
+      this.tmForm.logoUrl = res.data;
+
+
+      // console.log(this.tmForm.logoUrl);
     },
     //限定上传的图片格式与大小
     beforeAvatarUpload(file) {

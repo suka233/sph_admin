@@ -67,22 +67,22 @@ export const constantRoutes = [
         meta: {title: '品牌管理'}
       },
       {
-        path: '/product/Spu/list',
-        name: 'Spu',
-        component: () => import('@/views/product/Spu'),
-        meta: {title: 'Spu管理'}
+        path: '/product/Attr/list',
+        name: 'Attr',
+        component: () => import('@/views/product/Attr'),
+        meta: {title: '属性管理'}
       },
       {
         path: '/product/Sku/list',
         name: 'Sku',
         component: () => import('@/views/product/Sku'),
-        meta: {title: 'Sku管理'}
+        meta: {title: 'sku管理'}
       },
       {
-        path: '/product/Attr/list',
-        name: 'Attr',
-        component: () => import('@/views/product/Attr'),
-        meta: {title: '平台属性管理'}
+        path: '/product/Spu/list',
+        name: 'Spu',
+        component: () => import('@/views/product/Spu'),
+        meta: {title: 'spu管理'}
       },
     ],
     meta: {title: '商品管理', icon: 'example'}

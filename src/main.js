@@ -29,7 +29,7 @@ import '@/permission' // permission control
 // }
 
 // set ElementUI lang to EN
-Vue.use(ElementUI, { locale })
+Vue.use(ElementUI, {locale})
 // 如果想要中文版 element-ui，按如下方式声明
 // Vue.use(ElementUI)
 
@@ -37,11 +37,16 @@ Vue.config.productionTip = false
 
 //引入API挂载到全局
 import * as API from '@/api'
+
 Vue.prototype.$API = API
 
-//注册联动列表为全局组件
+//注册三级联动列表为全局组件
 import CategoryList from '@/components/CategoryList'
-Vue.component("CategoryList",CategoryList)
+Vue.component("CategoryList", CategoryList)
+
+//注册HintButton为全局组件
+import HintButton from "@/components/HintButton"
+Vue.component("HintButton", HintButton)
 
 new Vue({
   el: '#app',

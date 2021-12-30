@@ -1,0 +1,25 @@
+<template>
+  <el-tooltip class="item" effect="dark" :content="content" :placement="placement">
+    <el-button v-bind="$attrs" v-on="$listeners"></el-button>
+  </el-tooltip>
+</template>
+
+<script>
+export default {
+  name: "index",
+  props:{
+    content:{
+      type:String,
+      default:"使用content属性指定提示信息"
+    },
+    placement:{
+      type:String,
+      default: "top-start"  //默认值为上面
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>

@@ -1,7 +1,12 @@
 <template>
-  <el-tooltip class="item" effect="dark" :content="content" :placement="placement">
+  <!--<el-tooltip class="item" effect="dark" :content="content" :placement="placement">-->
+  <!--  <el-button v-bind="$attrs" v-on="$listeners"></el-button>-->
+  <!--</el-tooltip>-->
+
+  <!--以上的hintbutton有bug-->
+  <a  :title="content">
     <el-button v-bind="$attrs" v-on="$listeners"></el-button>
-  </el-tooltip>
+  </a>
 </template>
 
 <script>

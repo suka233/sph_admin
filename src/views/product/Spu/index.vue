@@ -52,6 +52,7 @@
       ></el-pagination>
     </div>
     <SpuForm
+      @addUpdateBack="addUpdateBack"
       :visible.sync="showStatus"
       ref="SpuForm"
       v-show="showStatus === 0"></SpuForm>
@@ -79,6 +80,7 @@ export default {
       limit:3,
       //总共有多少条数据
       total:0,
+      //flag标识 标记是添加spu还是修改spu
     }
   },
   components:{
@@ -134,6 +136,8 @@ export default {
     //点击添加Spu按钮
     addSpu(){
       this.showStatus = 0
+
+      this.$refs.SpuForm.initAddSpuForm(this.category3Id)
     },
 
     //点击修改Spu按钮
@@ -143,6 +147,11 @@ export default {
 
       //发送初始化数据,把当前的row信息传递过去
       this.$refs.SpuForm.initUpdateSpuForm(row)
+    },
+
+    //addUpdateBack spuForm子组件成功返回调用的事件
+    addUpdateBack(flag){
+      flag ? this.getSpuList() : this.getSpuList(this.page)
     }
   },
 }

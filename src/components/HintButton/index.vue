@@ -4,7 +4,7 @@
   <!--</el-tooltip>-->
 
   <!--以上的hintbutton有bug-->
-  <a  :title="content">
+  <a  :title="content" class="hintButton">
     <el-button v-bind="$attrs" v-on="$listeners"></el-button>
   </a>
 </template>
@@ -26,5 +26,7 @@ export default {
 </script>
 
 <style scoped>
-
+.hintButton {
+  margin:0 5px;
+}
 </style>

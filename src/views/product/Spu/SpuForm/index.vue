@@ -52,7 +52,7 @@
                   v-for="attr in unSelectedSaleAttrList"
                   :key="attr.id"
                   :label="attr.name"
-                  :value="attr.name"
+                  :value="`${attr.name}:${attr.id}`"
                 >
                 </el-option>
               </el-select>
@@ -99,7 +99,8 @@
                 >
                   {{ tag.saleAttrValueName }}
                 </el-tag>
-
+                <!--这里v-model="inputValue"合理吗?何不直接把这个inputValue挂在row上呢,这样输入的同时就搜集完毕了:-->
+                <!--v-model="row.inputValue"-->
                 <el-input
                   class="input-new-tag"
                   v-if="row.inputVisible"
@@ -127,7 +128,7 @@
               </template>
             </el-table-column>
           </el-table>
-          <el-button type="primary">保存</el-button>
+          <el-button type="primary" @click="saveOrUpdate">保存</el-button>
           <el-button @click="cancelFn">取消</el-button>
         </template>
       </el-form-item>
@@ -140,6 +141,8 @@ export default {
   name: "SpuForm",
   data() {
     return {
+      //flag标识,是否是新增?
+      isAdd:false,
       spuForm: {
         category3Id: 0,
         //描述
@@ -172,6 +175,7 @@ export default {
       inputVisible: false,
       inputValue: '',
       //预处理的选择销售属性,暂定搜集id值
+      //TODO 要搜集name和id  saleAttrName: name , baseSaleAttrId: id
       spuSaleAttrListSelected: '',
       //以下是需要构造出来的最终数据
       // {
@@ -210,7 +214,7 @@ export default {
     }
   },
   methods: {
-    //初始化本页数据,由父组件调用
+    //点击修改后 初始化本页数据,由父组件调用
     async initUpdateSpuForm(row) {
       // 发送编辑模式下的四个请求来填充表单数据
 
@@ -264,6 +268,28 @@ export default {
       //清空选择的销售属性
       this.spuSaleAttrListSelected=''
     },
+
+    //点击新增后 初始化本页数据,由父组件调用
+    async initAddSpuForm(category3Id){
+      this.resetData()
+      //初始化一下数据
+      this.spuForm.category3Id = category3Id
+      this.isAdd = true
+
+      // 获取所有品牌列表,用于渲染品牌列表
+      // http://localhost:9529/dev-api/admin/product/baseTrademark/getTrademarkList
+      let trademarkList = await this.$API.trademark.getTrademarkList()
+      if (trademarkList.code === 200) {
+        this.trademarkList = trademarkList.data
+      }
+
+      // 获取所有的销售属性列表(不管是使用的还是未使用的
+      // http://localhost:9529/dev-api/admin/product/baseSaleAttrList
+      let saleAttrList = await this.$API.spu.getSaleAttrList()
+      if (saleAttrList.code === 200) {
+        this.spuSaleAttrList = saleAttrList.data
+      }
+    },
     //删除图片的回调
     handleRemove(file, fileList) {
       //fileList即是删除之后的图片列表,用它来更新一下spuImageList
@@ -278,16 +304,27 @@ export default {
       // 把相应的数据存入spuImageList中
       // 但是如果直接操作spuImageList 会触发再次加载
       // TODO 所以这里之后的操作应该是把图片直接整理进spuForm.spuImageList
-      // this.spuImageList.push({
-      //   name:file.name,
-      //   url:res.data,
-      // })
+      this.spuImageList.push({
+        //这俩项是为了顺利展示
+        name:file.name,
+        url:res.data,
+        //以下两项是为了搜集
+        imgName:file.name,
+        imgUrl:res.data,
+      })
+
     },
     //点击添加销售属性按钮
     addAttrValue(){
+      //把spuSaleAttrListSelected转为数组,并解构一下,拿到name和Id
+      const [name,id] = this.spuSaleAttrListSelected.split(':')
+      console.log(name, id);
       //给表格添加一项:inputVisible和spuSaleAttrValueList都必须在这里初始化,不然后面会报错
       this.spuForm.spuSaleAttrList.push({
-        saleAttrName:this.spuSaleAttrListSelected,
+        //TODO 这里还需要搜集id 放在baseSaleAttrId字段上
+        // saleAttrName:this.spuSaleAttrListSelected,
+        saleAttrName:name,
+        baseSaleAttrId:id,
         inputVisible:false,
         spuSaleAttrValueList:[]
       })
@@ -311,6 +348,8 @@ export default {
       if(this.inputValue.trim() === ""){
         this.$message('不可以输入空字符串,请重新输入')
         //编辑状态变为tag
+        //这里我傻了this.spuForm.spuSaleAttrList[index]不就是传下来的row吗!!直接用这个row就行了:
+        //row.inputVisible = false
         this.spuForm.spuSaleAttrList[index].inputVisible = false
         return
       }
@@ -327,7 +366,9 @@ export default {
       }
 
       //把this.inputValue封装为对象 push进this.spuForm.spuSaleAttrList
+      //TODO 可能还需要搜集id 如果最后保存不成功,那么试试在这里加入id baseSaleAttrId:row.baseSaleAttrId
       this.spuForm.spuSaleAttrList[index].spuSaleAttrValueList.push({
+        baseSaleAttrId:row.baseSaleAttrId,
         saleAttrValueName:this.inputValue,
         saleAttrName:row.saleAttrName
       })
@@ -349,7 +390,63 @@ export default {
     cancelFn() {
       //更改父组件的showStatus值,使用了.sync 修饰符
       this.$emit('update:visible', -1)
+      this.$emit('addUpdateBack',this.isAdd)
+      //清除本页数据
+      this.resetData()
     },
+    //点击保存按钮,保存修改或者新增
+    async saveOrUpdate(){
+      //整理spuImageList到spuForm.spuImageList里
+      this.spuImageList.forEach(item=>{
+        delete item.name
+        delete item.url
+      })
+      this.spuForm.spuImageList = this.spuImageList
+      //删除spuForm.spuSaleAttrList中私自挂载的数据
+      this.spuForm.spuSaleAttrList.forEach((item)=>{
+        delete item.inputVisible
+      })
+
+      //发送请求
+      const{message,code} = await this.$API.spu.addUpdate(this.spuForm)
+      //成功后
+      if (code === 200) {
+        //返回到父组件
+        this.$emit('update:visible', -1)
+        //通知父组件自己成功返回,让父组件自己刷新一下,
+        // 如果是修改,则刷新当前页,如果是新增,则刷新到首页
+        this.$emit('addUpdateBack',this.isAdd)
+
+        //清除data的数据,最后再清除 免得影响到上面的数据的发送
+        this.resetData()
+      }else {
+        //失败后
+        this.$message(message)
+      }
+    },
+    //重置data里面的数据
+    resetData(){
+      // 重置data里面的数据
+      this.isAdd=false
+      this.spuForm= {
+        category3Id: 0,
+          description: "",
+          id: 0,
+          spuImageList: [],
+          spuName: "",
+          spuSaleAttrList: [],
+          tmId: "",
+      }
+      this.dialogImageUrl= '',
+        this.dialogVisible= false,
+        this.trademarkList= []
+        this.trademarkValue= 0
+        this.spuSaleAttrList= []
+        this.spuSaleAttrValueList= []
+        this.spuImageList= []
+        this.inputVisible= false
+        this.inputValue= ''
+    }
 
   },
   computed: {
